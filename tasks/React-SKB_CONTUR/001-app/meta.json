@@ -1,0 +1,19 @@
+{
+  "title": "import {} from \"react\";",
+  "difficulty": "hard",
+  "tags": [
+    "React-SKB_CONTUR",
+    "array",
+    "async"
+  ],
+  "language": "typescript",
+  "exports": [
+    "App",
+    "addProduct",
+    "removeProduct",
+    "updateProduct",
+    "removeProduct",
+    "updateProduct",
+    "sendProducts"
+  ]
+}

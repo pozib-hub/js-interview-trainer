@@ -1,0 +1,16 @@
+{
+  "title": "Отредактировать компонент",
+  "difficulty": "hard",
+  "tags": [
+    "react",
+    "array",
+    "types"
+  ],
+  "language": "typescript",
+  "exports": [
+    "handleScroll",
+    "getBigRandomList",
+    "getBigRandomList",
+    "App"
+  ]
+}

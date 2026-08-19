@@ -1,0 +1,6 @@
+node_modules
+.next
+out
+build
+tasks/**/solution.ts
+tasks/**/.user-solution.ts

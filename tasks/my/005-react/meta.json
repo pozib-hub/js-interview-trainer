@@ -1,0 +1,16 @@
+{
+  "title": "react",
+  "difficulty": "hard",
+  "tags": [
+    "my"
+  ],
+  "language": "typescript",
+  "exports": [
+    "App",
+    "App",
+    "onMouseLive",
+    "onMouseEnter",
+    "onMouseEnter",
+    "onMouseLive"
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "title": "[1, 2, 6, 4, 8, 5], targetSum 7 => [1,6]",
+  "difficulty": "hard",
+  "tags": [
+    "algorithms",
+    "array"
+  ],
+  "language": "typescript",
+  "exports": [
+    "twoSum",
+    "findSumPairs",
+    "findSumPairs"
+  ]
+}

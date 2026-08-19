@@ -1,0 +1,13 @@
+{
+  "title": "switch",
+  "difficulty": "hard",
+  "tags": [
+    "ts",
+    "types"
+  ],
+  "language": "typescript",
+  "exports": [
+    "actWith",
+    "actWith"
+  ]
+}
