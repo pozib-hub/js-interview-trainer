@@ -5,6 +5,7 @@ import type { RunResult, TaskFull, TaskSummary } from "@/lib/types";
 import CodeEditor from "@/components/CodeEditor";
 import { useResizableLayout, DragHandle, HDragHandle } from "@/lib/useResizableLayout";
 import { useAppData, pickRandomTasks, type InterviewSession } from "@/lib/useAppData";
+import { fetchTasks, fetchTask, runTests } from "@/lib/taskApi";
 
 type Phase = "setup" | "running" | "results";
 
@@ -44,9 +45,7 @@ function InterviewInner() {
   saveSessionRef.current = app.saveSession;
 
   useEffect(() => {
-    fetch("/api/tasks")
-      .then((r) => r.json())
-      .then((data) => setAllTasks(data.tasks || []));
+    fetchTasks().then((data) => setAllTasks(data));
   }, []);
 
   const loadTask = useCallback((taskId: string) => {
@@ -54,8 +53,7 @@ function InterviewInner() {
     setTaskLoading(true);
     setResult(null);
     setShowSolution(false);
-    fetch(`/api/task/${encodeURIComponent(taskId)}`)
-      .then((r) => (r.ok ? r.json() : null))
+    fetchTask(taskId)
       .then((data: TaskFull | null) => {
         setTask(data);
         if (data) {
@@ -87,12 +85,7 @@ function InterviewInner() {
     setResult(null);
     localStorage.setItem(STORAGE_PREFIX + task.id, code);
     try {
-      const res = await fetch("/api/run", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ taskId: task.id, code }),
-      });
-      const data: RunResult = await res.json();
+      const data = await runTests(task.id, code, task.testFile, task.exports);
       setResult(data);
       setResults((prev) => ({ ...prev, [task.id]: data.passed }));
       if (data.passed) markSolvedRef.current(task.id);

@@ -27,6 +27,7 @@ export interface TaskFull extends TaskSummary {
   hints: string[];
   solution: string;
   testFile: string;
+  exports?: string[];
 }
 
 export interface TestAssertion {

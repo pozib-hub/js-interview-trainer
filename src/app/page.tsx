@@ -1,6 +1,12 @@
-import { redirect } from "next/navigation";
+"use client";
+
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 
 export default function HomePage() {
-  // Главная — редирект на первую попавшуюся задачу (определяется на клиенте через TaskTree)
-  redirect("/tasks");
+  const router = useRouter();
+  useEffect(() => {
+    router.replace("/tasks");
+  }, [router]);
+  return null;
 }

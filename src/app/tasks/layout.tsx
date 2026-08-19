@@ -8,6 +8,7 @@ import {
   DragHandle,
 } from "@/lib/useResizableLayout";
 import { useAppData } from "@/lib/useAppData";
+import { fetchTopics } from "@/lib/taskApi";
 
 export default function TasksLayout({
   children,
@@ -19,9 +20,7 @@ export default function TasksLayout({
   const app = useAppData();
 
   useEffect(() => {
-    fetch("/api/tasks")
-      .then((r) => r.json())
-      .then((data) => setTopics(data.topics || {}));
+    fetchTopics().then((data) => setTopics(data));
   }, []);
 
   const taskCount = Object.values(topics).flat().length;
