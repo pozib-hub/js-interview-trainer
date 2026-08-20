@@ -14,7 +14,8 @@ export function generateStaticParams() {
   }
 }
 
-export default function TaskPage({ params }: { params: { id: string[] } }) {
-  const taskId = params.id.join("/");
+export default async function TaskPage({ params }: { params: Promise<{ id: string[] }> }) {
+  const { id } = await params;
+  const taskId = id.join("/");
   return <TaskPageClient taskId={taskId} />;
 }
