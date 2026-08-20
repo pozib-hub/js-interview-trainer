@@ -8,3 +8,4 @@ build
 next-env.d.ts
 tasks/**/.user-solution.ts
 .vitest-cache
+.npmrc

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { RunResult, TaskFull, TaskSummary } from "@/lib/types";
 import CodeEditor from "@/components/CodeEditor";
@@ -164,9 +165,9 @@ function InterviewInner() {
         <header className="app-header">
           <h1>Interview Trainer</h1>
           <div className="spacer" />
-          <a href="/tasks" className="btn btn-sm" style={{ textDecoration: "none" }}>
+          <Link href="/tasks" className="btn btn-sm" style={{ textDecoration: "none" }}>
             ← К списку задач
-          </a>
+          </Link>
         </header>
         <div className="main" style={{ alignItems: "center", justifyContent: "center" }}>
           <div style={{ maxWidth: 520, width: "100%", padding: 40 }}>

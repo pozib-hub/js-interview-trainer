@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import type { TaskSummary } from "@/lib/types";
 import TaskTree from "@/components/TaskTree";
@@ -58,9 +59,9 @@ export default function TasksLayout({
             Сбросить решённые
           </button>
         )}
-        <a href="/interview" className="btn btn-sm" style={{ textDecoration: "none" }}>
+        <Link href="/interview" className="btn btn-sm" style={{ textDecoration: "none" }}>
           🎯 Собеседование
-        </a>
+        </Link>
       </header>
       <div className="app-body" ref={containerRef}>
         <aside

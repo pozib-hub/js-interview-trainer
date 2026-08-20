@@ -118,7 +118,7 @@ export default function TaskTree({ topics, isSolved, onToggleSolved }: Props) {
                 return (
                   <Link
                     key={task.id}
-                    href={`/tasks/${encodeURIComponent(task.id)}`}
+                    href={`/tasks/${task.id}`}
                     className={`task-item ${active ? "active" : ""}`}
                     style={{ textDecoration: "none", color: "inherit" }}
                   >

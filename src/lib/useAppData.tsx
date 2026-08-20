@@ -10,6 +10,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { apiFetch } from "./fetchApi";
 
 export interface InterviewSession {
   id: string;
@@ -120,7 +121,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     (async () => {
       const local = loadFromStorage();
       try {
-        const res = await fetch("/api/data");
+        const res = await apiFetch("/api/data");
         if (res.ok) {
           const server = (await res.json()) as AppData;
           const merged: AppData = {
@@ -143,7 +144,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
             local.sessions.length > server.sessions.length ||
             Object.keys(local.code).length > Object.keys(server.code).length
           ) {
-            fetch("/api/data", {
+            apiFetch("/api/data", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify(merged),
@@ -165,7 +166,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     if (syncTimer.current) clearTimeout(syncTimer.current);
     syncTimer.current = setTimeout(() => {
       if (Object.keys(pendingPatch.current).length === 0) return;
-      fetch("/api/data", {
+      apiFetch("/api/data", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(pendingPatch.current),

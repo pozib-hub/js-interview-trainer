@@ -6,13 +6,15 @@ export function generateStaticParams() {
     const { readFileSync } = require("fs");
     const { join } = require("path");
     const data = JSON.parse(readFileSync(join(process.cwd(), "public", "tasks.json"), "utf8"));
-    return (data.tasks || []).map((t: { id: string }) => ({ id: encodeURIComponent(t.id) }));
+    return (data.tasks || []).map((t: { id: string }) => ({
+      id: t.id.split("/"),
+    }));
   } catch {
     return [];
   }
 }
 
-export default function TaskPage({ params }: { params: { id: string } }) {
-  const taskId = decodeURIComponent(params.id);
+export default function TaskPage({ params }: { params: { id: string[] } }) {
+  const taskId = params.id.join("/");
   return <TaskPageClient taskId={taskId} />;
 }

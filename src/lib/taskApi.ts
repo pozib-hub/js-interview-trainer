@@ -1,11 +1,12 @@
 import type { RunResult, TaskFull, TaskSummary } from "./types";
 import { runTestsInBrowser } from "./browser-runner";
+import { apiFetch } from "./fetchApi";
 
 const isStatic = typeof process.env.NEXT_PUBLIC_STATIC_MODE !== "undefined" && process.env.NEXT_PUBLIC_STATIC_MODE === "true";
 
 export async function fetchTasks(): Promise<TaskSummary[]> {
   if (isStatic) {
-    const res = await fetch("/tasks.json");
+    const res = await apiFetch("/tasks.json");
     const data = await res.json();
     return data.tasks || [];
   }
@@ -16,7 +17,7 @@ export async function fetchTasks(): Promise<TaskSummary[]> {
 
 export async function fetchTopics(): Promise<Record<string, TaskSummary[]>> {
   if (isStatic) {
-    const res = await fetch("/tasks.json");
+    const res = await apiFetch("/tasks.json");
     const data = await res.json();
     return data.topics || {};
   }
@@ -27,7 +28,7 @@ export async function fetchTopics(): Promise<Record<string, TaskSummary[]>> {
 
 export async function fetchTask(id: string): Promise<TaskFull | null> {
   if (isStatic) {
-    const res = await fetch("/tasks.json");
+    const res = await apiFetch("/tasks.json");
     const data = await res.json();
     return data.tasks?.find((t: TaskFull) => t.id === id) ?? null;
   }
