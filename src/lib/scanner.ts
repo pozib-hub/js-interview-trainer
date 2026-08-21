@@ -5,6 +5,19 @@ import type { TaskFull, TaskMeta, TaskSummary } from "./types";
 const TASKS_ROOT = path.resolve(process.cwd(), "tasks");
 const isDev = process.env.NODE_ENV !== "production";
 
+/**
+ * Проверяет, что taskId безопасен и резолвится внутри TASKS_ROOT.
+ * Защищает от path traversal (../, абсолютные пути, null bytes).
+ */
+function resolveTaskId(id: string): string | null {
+  if (!id || typeof id !== "string") return null;
+  if (id.includes("\0")) return null;
+  const resolved = path.resolve(TASKS_ROOT, id);
+  const rel = path.relative(TASKS_ROOT, resolved);
+  if (rel.startsWith("..") || path.isAbsolute(rel)) return null;
+  return resolved;
+}
+
 // In-memory cache — survives across requests
 let tasksCache: TaskSummary[] | null = null;
 let tasksCacheTime = 0;
@@ -92,8 +105,8 @@ export function listTasks(): TaskSummary[] {
 export function getTask(id: string): TaskFull | null {
   const now = Date.now();
 
-  // Check cache freshness by mtime in dev
-  const dir = path.join(TASKS_ROOT, id);
+  const dir = resolveTaskId(id);
+  if (!dir) return null;
 
   if (isDev) {
     const cached = taskCache.get(id);
