@@ -2,7 +2,7 @@
 
 import type { AppDataContextValue } from "@hooks/useAppData";
 import classNames from "@shared/lib/classNames";
-import { Box, Button, Spacer, Typography } from "@ui/index";
+import { Box, Button, Spacer, ThemeToggle, Typography } from "@ui/index";
 import styles from "./InterviewSetupPhase.module.css";
 
 const cx = classNames.bind(styles);
@@ -25,6 +25,7 @@ function InterviewSetupPhase(props: IInterviewSetupPhaseProps) {
       <header className="AppHeader">
         <h1>Interview Trainer</h1>
         <Spacer />
+        <ThemeToggle />
         <Button size="sm" href="/tasks">← К списку задач</Button>
       </header>
       <Box className="Main" alignItems="center" justifyContent="center">

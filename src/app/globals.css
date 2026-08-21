@@ -11,6 +11,19 @@
   --yellow: #d29922;
 }
 
+[data-theme="light"] {
+  --bg: #ffffff;
+  --bg-soft: #f6f8fa;
+  --bg-softer: #eef1f5;
+  --border: #d0d7de;
+  --text: #1f2328;
+  --text-muted: #656d76;
+  --accent: #2f81f7;
+  --green: #1a7f37;
+  --red: #cf222e;
+  --yellow: #9a6700;
+}
+
 * {
   box-sizing: border-box;
 }

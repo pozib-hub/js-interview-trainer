@@ -7,3 +7,4 @@ export { default as EmptyState } from "./EmptyState";
 export { default as Box } from "./Box";
 export { default as Spacer } from "./Spacer";
 export { default as Typography } from "./Typography";
+export { default as ThemeToggle } from "./ThemeToggle";

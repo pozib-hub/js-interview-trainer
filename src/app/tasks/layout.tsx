@@ -6,7 +6,7 @@ import TaskTree from "@components/TaskTree";
 import { useResizableLayout, DragHandle } from "@hooks/useResizableLayout";
 import { useAppData } from "@hooks/useAppData";
 import { fetchTopics } from "@lib/taskApi";
-import { Box, Button, Skeleton, Spacer, Spinner, Typography } from "@ui/index";
+import { Box, Button, Skeleton, Spacer, Spinner, ThemeToggle, Typography } from "@ui/index";
 
 export default function TasksLayout({
   children,
@@ -62,6 +62,7 @@ export default function TasksLayout({
             Сбросить решённые
           </Button>
         )}
+        <ThemeToggle />
         <Button size="sm" href="/interview">🎯 Собеседование</Button>
       </header>
       <div className="AppBody" ref={containerRef}>

@@ -2,6 +2,7 @@
 
 import { lazy, Suspense } from "react";
 import classNames from "@shared/lib/classNames";
+import { useTheme } from "@hooks/useTheme";
 import styles from "./CodeEditor.module.css";
 import EditorSkeleton from "./Components/EditorSkeleton/EditorSkeleton";
 
@@ -16,6 +17,7 @@ interface ICodeEditorProps {
 
 export default function CodeEditor(props: ICodeEditorProps) {
   const { value, onChange, language = "typescript" } = props;
+  const { theme } = useTheme();
 
   return (
     <div className={cx("EditorWrap")}>
@@ -23,7 +25,7 @@ export default function CodeEditor(props: ICodeEditorProps) {
         <MonacoEditor
           height="100%"
           language={language}
-          theme="vs-dark"
+          theme={theme === "dark" ? "vs-dark" : "vs"}
           value={value}
           onChange={(v) => onChange(v ?? "")}
           loading={<EditorSkeleton />}

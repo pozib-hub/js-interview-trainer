@@ -1,6 +1,6 @@
 "use client";
 
-import { Box, Button, Spacer, Typography } from "@ui/index";
+import { Box, Button, Spacer, ThemeToggle, Typography } from "@ui/index";
 import classNames from "@shared/lib/classNames";
 import styles from "./InterviewResultsPhase.module.css";
 
@@ -23,6 +23,7 @@ function InterviewResultsPhase(props: IInterviewResultsPhaseProps) {
       <header className="AppHeader">
         <h1>Результаты тренировки</h1>
         <Spacer />
+        <ThemeToggle />
       </header>
       <Box className="Main" alignItems="center" justifyContent="center">
         <Box p={40} maxWidth={600} width="100%">

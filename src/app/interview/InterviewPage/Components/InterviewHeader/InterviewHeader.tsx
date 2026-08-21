@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, Spacer, Typography } from "@ui/index";
+import { Button, Spacer, ThemeToggle, Typography } from "@ui/index";
 
 interface IInterviewHeaderProps {
   passedCount: number;
@@ -19,6 +19,7 @@ function InterviewHeader(props: IInterviewHeaderProps) {
         Задача {currentIndex + 1} из {taskIds.length} • решено: {passedCount}
       </Typography>
       <Spacer />
+      <ThemeToggle />
       <Button size="sm" onClick={finishEarly}>
         Завершить
       </Button>
