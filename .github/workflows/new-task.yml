@@ -109,12 +109,9 @@ jobs:
           # Загружаем title/body issue из файла (многострочный текст безопасно).
           export ISSUE_TITLE="${{ steps.issuedata.outputs.title }}"
           export ISSUE_BODY="$(cat /tmp/issue-body.md)"
-          node .github/scripts/generate-task.mjs > /tmp/gen-output.txt 2>&1
-          code=$?
-          cat /tmp/gen-output.txt
+          node .github/scripts/generate-task.mjs 2>&1 | tee /tmp/gen-output.txt
+          code=${PIPESTATUS[0]}
           if [ $code -ne 0 ]; then
-            # Скрипт пишет полный текст ошибки в .github/_error.md (файл,
-            # обходит лимиты GitHub step-output для длинных сообщений).
             exit 1
           fi
           TASK_ID=$(grep '^::task-id::' /tmp/gen-output.txt | sed 's/^::task-id:://' | head -1)
@@ -123,6 +120,17 @@ jobs:
           echo "task-id=$TASK_ID" >> "$GITHUB_OUTPUT"
           echo "branch=$BRANCH" >> "$GITHUB_OUTPUT"
           echo "title=$TITLE" >> "$GITHUB_OUTPUT"
+
+      - name: Загрузить лог пайплайна как artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pipeline-log-issue-${{ steps.issue.outputs.number }}
+          path: |
+            .github/_pipeline-log.md
+            .github/_error.md
+          if-no-files-found: ignore
+          retention-days: 30
 
       - name: Создать Pull Request
         id: pr

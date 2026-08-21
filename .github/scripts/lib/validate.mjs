@@ -23,7 +23,7 @@ export function validateTask(t, opts = {}) {
   const req = [
     "title", "topic", "slug", "difficulty", "tags", "language",
     "exports", "condition", "examples", "constraints",
-    "templateCode", "solutionCode", "testCode", "hints", "source",
+    "templateCode", "solutionCode", "testCode", "hints",
   ];
   for (const k of req) {
     if (!(k in t)) errors.push(`Отсутствует обязательное поле: ${k}.`);
@@ -138,19 +138,21 @@ export function validateTask(t, opts = {}) {
     }
   }
 
-  // source
+  // source (optional — null or omitted is OK)
   const s = t.source;
-  if (!s || typeof s !== "object") {
-    errors.push("source должен быть объектом.");
-  } else if (typeof s.name !== "string" || s.name.length < 1) {
-    errors.push("source.name обязателен.");
-  } else if (typeof s.url !== "string" || s.url.length < 1) {
-    errors.push("source.url обязателен.");
-  } else {
-    try {
-      new URL(s.url);
-    } catch {
-      errors.push(`source.url некорректен: ${s.url}`);
+  if (s !== null && s !== undefined) {
+    if (typeof s !== "object" || Array.isArray(s)) {
+      errors.push("source должен быть объектом или null.");
+    } else if (typeof s.name !== "string" || s.name.length < 1) {
+      errors.push("source.name обязателен, если source задан.");
+    } else if (typeof s.url !== "string" || s.url.length < 1) {
+      errors.push("source.url обязателен, если source задан.");
+    } else {
+      try {
+        new URL(s.url);
+      } catch {
+        errors.push(`source.url некорректен: ${s.url}`);
+      }
     }
   }
 

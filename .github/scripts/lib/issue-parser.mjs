@@ -56,14 +56,13 @@ export function parseIssueBody(body, title = "") {
 
 /**
  * Validate the parsed issue has the minimum required data.
+ * Only "Описание задачи" is required. Everything else is optional.
  * Returns an array of human-readable error strings (empty = ok).
  */
 export function validateParsedIssue(parsed) {
   const errors = [];
-  if (!parsed.description && !parsed.sourceUrl) {
-    errors.push(
-      "Не заполнено «Описание задачи» и не указан URL источника. Укажите хотя бы одно.",
-    );
+  if (!parsed.description) {
+    errors.push("Не заполнено «Описание задачи». Это единственное обязательное поле.");
   }
   if (parsed.sourceUrl) {
     try {

@@ -83,14 +83,14 @@
       "description": "2-3 подсказки без заголовков '## ...' (генератор добавит). Общие направления мысли, крайние случаи, подходы. БЕЗ выдуманных фактов."
     },
     "source": {
-      "type": "object",
+      "type": ["object", "null"],
       "additionalProperties": false,
       "properties": {
         "name": { "type": "string", "minLength": 1 },
         "url": { "type": "string", "minLength": 1 }
       },
       "required": ["name", "url"],
-      "description": "Источник задачи. url сохраняй из issue. Если источника нет — name='user', url=пустая строка недопустима, тогда используй 'https://github.com/' (placeholder)."
+      "description": "Источник задачи. Если URL дан в issue — сохрани его. Если источника нет — верни null."
     }
   },
   "required": [
@@ -107,7 +107,6 @@
     "templateCode",
     "solutionCode",
     "testCode",
-    "hints",
-    "source"
+    "hints"
   ]
 }
