@@ -1,0 +1,160 @@
+name: Generate Task from Issue
+
+on:
+  issues:
+    types: [opened, edited, reopened]
+  workflow_dispatch:
+    inputs:
+      issue_number:
+        description: "Номер issue для обработки"
+        required: true
+        type: string
+
+# Only the default GITHUB_TOKEN is used — minimal, scoped permissions.
+# No PAT is ever stored in the frontend or elsewhere.
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+concurrency:
+  # Prevent concurrent runs for the same issue to avoid duplicate PRs.
+  group: task-issue-${{ github.event.issue.number || github.event.inputs.issue_number }}
+  cancel-in-progress: false
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    # Only process issues labeled "task" that have NOT already been processed.
+    # Edited/reopened issues are allowed (so the user can fix and retry).
+    if: |
+      (github.event_name == 'workflow_dispatch') ||
+      (github.event_name == 'issues' && contains(github.event.issue.labels.*.name, 'task') && !contains(github.event.issue.labels.*.name, 'task-processed'))
+    steps:
+      - name: Resolve issue number
+        id: issue
+        run: |
+          if [ -n "${{ github.event.inputs.issue_number }}" ]; then
+            echo "number=${{ github.event.inputs.issue_number }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "number=${{ github.event.issue.number }}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Fetch issue data
+        id: issuedata
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          ISSUE_JSON=$(gh issue view ${{ steps.issue.outputs.number }} --json number,title,body,labels)
+          echo "title=$(echo "$ISSUE_JSON" | jq -r .title)" >> "$GITHUB_OUTPUT"
+          echo "labels=$(echo "$ISSUE_JSON" | jq -r '.labels[].name' | tr '\n' ' ')" >> "$GITHUB_OUTPUT"
+          # Body goes to a file to avoid shell-escaping issues with multiline content.
+          echo "$ISSUE_JSON" | jq -r .body > /tmp/issue-body.md
+
+      - name: Skip if already processed
+        if: contains(steps.issuedata.outputs.labels, 'task-processed')
+        run: echo "Issue already processed — skipping." && exit 0
+
+      - name: Mark as processing
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh issue edit ${{ steps.issue.outputs.number }} --remove-label "task-failed" || true
+          gh issue edit ${{ steps.issue.outputs.number }} --add-label "task-processing" || true
+          gh issue comment ${{ steps.issue.outputs.number }} --body "🤖 Начинаю генерацию задачи (AI pipeline)..." || true
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate task files via LLM
+        id: gen
+        env:
+          LLM_API_KEY: ${{ secrets.LLM_API_KEY || secrets.DEEPSEEK_API_KEY || secrets.OPENAI_API_KEY }}
+          LLM_BASE_URL: ${{ secrets.LLM_BASE_URL || 'https://api.deepseek.com/v1' }}
+          LLM_MODEL: ${{ secrets.LLM_MODEL || 'deepseek-chat' }}
+          TASKS_ROOT: ${{ github.workspace }}/tasks
+        run: |
+          # Load issue title/body from the fetched data (multiline-safe).
+          export ISSUE_TITLE="${{ steps.issuedata.outputs.title }}"
+          export ISSUE_BODY="$(cat /tmp/issue-body.md)"
+          node .github/scripts/generate-task.mjs > /tmp/gen-output.txt 2>&1
+          code=$?
+          cat /tmp/gen-output.txt
+          if [ $code -ne 0 ]; then
+            # The script persists a full error to .github/_error.md (file-based,
+            # avoids GitHub step-output / expression limits for long messages).
+            exit 1
+          fi
+          TASK_ID=$(grep '^::task-id::' /tmp/gen-output.txt | sed 's/^::task-id:://' | head -1)
+          BRANCH=$(grep '^::branch::' /tmp/gen-output.txt | sed 's/^::branch:://' | head -1)
+          TITLE=$(grep '^::title::' /tmp/gen-output.txt | sed 's/^::title:://' | head -1)
+          echo "task-id=$TASK_ID" >> "$GITHUB_OUTPUT"
+          echo "branch=$BRANCH" >> "$GITHUB_OUTPUT"
+          echo "title=$TITLE" >> "$GITHUB_OUTPUT"
+
+      - name: Create Pull Request
+        id: pr
+        uses: peter-evans/create-pull-request@v6
+        with:
+          commit-message: "Добавлена задача ${{ steps.gen.outputs.task-id }} (issue #${{ steps.issue.outputs.number }})"
+          branch: ${{ steps.gen.outputs.branch }}
+          title: "Задача: ${{ steps.gen.outputs.title }}"
+          body-path: .github/_pr_preview.md
+          labels: "generated-task"
+          assignees: ${{ github.event.issue.user.login || github.actor }}
+          # PR is NEVER opened against main directly; reviewers must merge manually.
+          draft: true
+
+      - name: Comment with PR link & mark processed
+        if: success()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_URL: ${{ steps.pr.outputs.pull-request-url }}
+        run: |
+          gh issue comment ${{ steps.issue.outputs.number }} --body "✅ Задача сгенерирована и оформлена как черновик PR: ${PR_URL}
+
+          Проверьте PR перед merge. При необходимости отредактируйте файлы задачи прямо в ветке."
+          gh issue edit ${{ steps.issue.outputs.number }} --remove-label "task-processing" --add-label "task-processed" || true
+
+      - name: Report failure on issue
+        if: failure()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Read the full error message from the file written by the generator.
+          if [ -f .github/_error.md ]; then
+            ERROR_MSG="$(cat .github/_error.md)"
+          else
+            ERROR_MSG="См. логи workflow: https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+          fi
+          # Write to a temp file to preserve multiline formatting in the comment.
+          cat > /tmp/fail-comment.md <<COMMENT_EOF
+          ❌ Не удалось сгенерировать задачу.
+
+          **Причина:**
+          \`\`\`
+          $ERROR_MSG
+          \`\`\`
+
+          Что можно сделать:
+          - проверьте, что секция «Описание задачи» заполнена;
+          - если указан URL LeetCode — убедитесь, что он корректен (или дополните текстом);
+          - отредактируйте issue и перезапустите workflow вручную: Actions → «Generate Task from Issue» → Run workflow с номером этого issue.
+          COMMENT_EOF
+          gh issue comment ${{ steps.issue.outputs.number }} --body-file /tmp/fail-comment.md || true
+          gh issue edit ${{ steps.issue.outputs.number }} --remove-label "task-processing" --add-label "task-failed" || true
+
+      - name: Cleanup processing label on cancellation
+        if: cancelled()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh issue edit ${{ steps.issue.outputs.number }} --remove-label "task-processing" || true

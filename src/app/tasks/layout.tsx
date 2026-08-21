@@ -6,6 +6,7 @@ import TaskTree from "@components/TaskTree";
 import { useResizableLayout, DragHandle } from "@hooks/useResizableLayout";
 import { useAppData } from "@hooks/useAppData";
 import { fetchTopics } from "@lib/taskApi";
+import { newTaskIssueUrl } from "@lib/contribute";
 import { Box, Button, Skeleton, Spacer, Spinner, ThemeToggle, Typography } from "@ui/index";
 
 export default function TasksLayout({
@@ -64,6 +65,9 @@ export default function TasksLayout({
         )}
         <ThemeToggle />
         <Button size="sm" href="/interview">🎯 Собеседование</Button>
+        <Button size="sm" variant="primary" href={newTaskIssueUrl()} title="Предложить новую задачу через GitHub Issue">
+          ➕ Добавить задачу
+        </Button>
       </header>
       <div className="AppBody" ref={containerRef}>
         <aside
