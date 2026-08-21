@@ -6,7 +6,7 @@
     "dev": "node scripts/dev.mjs",
     "prebuild": "node scripts/build-tasks.mjs",
     "build": "next build",
-    "build:static": "NEXT_PUBLIC_STATIC_MODE=true node scripts/build-tasks.mjs && NEXT_PUBLIC_STATIC_MODE=true NEXT_PUBLIC_BASE_PATH=/js-interview-trainer next build && NEXT_PUBLIC_STATIC_MODE=true node scripts/restore-api.mjs",
+    "build:static": "node scripts/build-static.mjs",
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit"

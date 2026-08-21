@@ -6,15 +6,6 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const TASKS_ROOT = path.resolve(__dirname, "../tasks");
 const OUT_FILE = path.resolve(__dirname, "../public/tasks.json");
-const API_DIR = path.resolve(__dirname, "../src/app/api");
-const API_BACKUP = path.resolve(__dirname, "../src/app/_api_backup");
-
-// In static mode, move API routes out of the way so Next.js doesn't try to build them
-if (process.env.NEXT_PUBLIC_STATIC_MODE === "true" && fs.existsSync(API_DIR)) {
-  if (fs.existsSync(API_BACKUP)) fs.rmSync(API_BACKUP, { recursive: true, force: true });
-  fs.renameSync(API_DIR, API_BACKUP);
-  console.log("API routes moved to backup for static build");
-}
 
 function readSafe(dir, name, fallback = "") {
   try {
