@@ -39,6 +39,9 @@ jobs:
         )
       )
     steps:
+      - name: Чекаут репозитория
+        uses: actions/checkout@v4
+
       - name: Resolve issue number
         id: issue
         run: |
@@ -48,7 +51,7 @@ jobs:
             echo "number=${{ github.event.issue.number }}" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Create labels if missing
+      - name: Создать лейблы если нет
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -57,7 +60,7 @@ jobs:
           gh label create "task-processed" --description "Задача обработана, PR создан" --color "1B5E20" --force || true
           gh label create "task-failed" --description "Ошибка генерации задачи" --color "B71C1C" --force || true
 
-      - name: Fetch issue data
+      - name: Получить данные issue
         id: issuedata
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -74,7 +77,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: gh issue edit ${{ steps.issue.outputs.number }} --add-label "task" || true
 
-      - name: Skip if already processed
+      - name: Пропуск если уже обработан
         if: contains(steps.issuedata.outputs.labels, 'task-processed')
         run: echo "Issue уже обработан — пропуск." && exit 0
 
@@ -85,9 +88,6 @@ jobs:
           gh issue edit ${{ steps.issue.outputs.number }} --remove-label "task-failed" || true
           gh issue edit ${{ steps.issue.outputs.number }} --add-label "task-processing" || true
           gh issue comment ${{ steps.issue.outputs.number }} --body "🤖 Начинаю генерацию задачи (AI pipeline)..." || true
-
-      - name: Чекаут репозитория
-        uses: actions/checkout@v4
 
       - name: Установить Node
         uses: actions/setup-node@v4

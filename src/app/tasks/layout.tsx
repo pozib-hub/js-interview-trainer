@@ -65,7 +65,7 @@ export default function TasksLayout({
         )}
         <ThemeToggle />
         <Button size="sm" href="/interview">🎯 Собеседование</Button>
-        <Button size="sm" variant="primary" href={newTaskIssueUrl()} title="Предложить новую задачу через GitHub Issue">
+        <Button size="sm" variant="primary" href={newTaskIssueUrl()} external title="Предложить новую задачу через GitHub Issue">
           ➕ Добавить задачу
         </Button>
       </header>

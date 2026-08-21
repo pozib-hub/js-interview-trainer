@@ -12,6 +12,7 @@ interface IButtonProps {
   block?: boolean;
   disabled?: boolean;
   href?: string;
+  external?: boolean;
   onClick?: () => void;
   title?: string;
   children: React.ReactNode;
@@ -26,6 +27,7 @@ export default function Button(props: IButtonProps) {
     block,
     disabled,
     href,
+    external,
     onClick,
     title,
     children,
@@ -46,6 +48,13 @@ export default function Button(props: IButtonProps) {
   );
 
   if (href) {
+    if (external) {
+      return (
+        <a href={href} title={title} target="_blank" rel="noopener noreferrer" style={{ textDecoration: "none" }}>
+          {el}
+        </a>
+      );
+    }
     return (
       <Link href={href} title={title} style={{ textDecoration: "none" }}>
         {el}
