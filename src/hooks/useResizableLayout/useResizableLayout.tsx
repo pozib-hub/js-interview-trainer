@@ -92,6 +92,17 @@ export function LayoutProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
+    let saveTimer: ReturnType<typeof setTimeout> | null = null;
+
+    const saveLayout = (state: LayoutState) => {
+      if (saveTimer) clearTimeout(saveTimer);
+      saveTimer = setTimeout(() => {
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        } catch {}
+      }, 300);
+    };
+
     const onMove = (e: MouseEvent) => {
       const drag = dragRef.current;
       if (!drag) return;
@@ -106,9 +117,7 @@ export function LayoutProvider({ children }: { children: ReactNode }) {
         const next = { ...current, sidebar: w };
         layoutRef.current = next;
         setLayout(next);
-        try {
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-        } catch {}
+        saveLayout(next);
       } else if (drag.target === "leftPane") {
         const w = Math.min(
           MAX.leftPane,
@@ -117,9 +126,7 @@ export function LayoutProvider({ children }: { children: ReactNode }) {
         const next = { ...current, leftPane: w };
         layoutRef.current = next;
         setLayout(next);
-        try {
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-        } catch {}
+        saveLayout(next);
       } else if (drag.target === "resultsHeight") {
         const h = Math.min(
           MAX.resultsHeight,
@@ -128,9 +135,7 @@ export function LayoutProvider({ children }: { children: ReactNode }) {
         const next = { ...current, resultsHeight: h };
         layoutRef.current = next;
         setLayout(next);
-        try {
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-        } catch {}
+        saveLayout(next);
       }
     };
 
@@ -139,6 +144,12 @@ export function LayoutProvider({ children }: { children: ReactNode }) {
         dragRef.current = null;
         document.body.style.cursor = "";
         document.body.style.userSelect = "";
+        if (saveTimer) {
+          clearTimeout(saveTimer);
+          try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(layoutRef.current));
+          } catch {}
+        }
       }
     };
 
@@ -148,6 +159,7 @@ export function LayoutProvider({ children }: { children: ReactNode }) {
     return () => {
       document.removeEventListener("mousemove", onMove);
       document.removeEventListener("mouseup", onUp);
+      if (saveTimer) clearTimeout(saveTimer);
     };
   }, []);
 
@@ -155,42 +167,5 @@ export function LayoutProvider({ children }: { children: ReactNode }) {
     <LayoutContext.Provider value={{ layout, startDrag, containerRef }}>
       {children}
     </LayoutContext.Provider>
-  );
-}
-
-import classNames from "@shared/lib/classNames";
-import styles from "./DragHandle.module.css";
-
-const cx = classNames.bind(styles);
-
-export function DragHandle({ onMouseDown }: { onMouseDown: (e: React.MouseEvent) => void }) {
-  return (
-    <div
-      onMouseDown={onMouseDown}
-      style={{
-        width: 4,
-        background: "var(--border)",
-        cursor: "col-resize",
-        flexShrink: 0,
-        zIndex: 10,
-      }}
-      className={cx("DragHandle")}
-    />
-  );
-}
-
-export function HDragHandle({ onMouseDown }: { onMouseDown: (e: React.MouseEvent) => void }) {
-  return (
-    <div
-      onMouseDown={onMouseDown}
-      style={{
-        height: 4,
-        background: "var(--border)",
-        cursor: "row-resize",
-        flexShrink: 0,
-        zIndex: 10,
-      }}
-      className={cx("DragHandle", "HDrag")}
-    />
   );
 }

@@ -297,15 +297,24 @@ export function pickRandomTasks(
   count: number,
   excludeIds: Set<string>
 ): string[] {
+  function fisherYatesShuffle<T>(arr: T[]): T[] {
+    const a = [...arr];
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
   const available = allTasks.filter((t) => !excludeIds.has(t.id));
 
   if (available.length < count) {
     const used = available.map((t) => t.id);
     const pool = allTasks.filter((t) => !used.includes(t.id));
-    const shuffled = [...available, ...pool].sort(() => Math.random() - 0.5);
+    const shuffled = fisherYatesShuffle([...available, ...pool]);
     return shuffled.slice(0, Math.min(count, allTasks.length)).map((t) => t.id);
   }
 
-  const shuffled = [...available].sort(() => Math.random() - 0.5);
+  const shuffled = fisherYatesShuffle(available);
   return shuffled.slice(0, count).map((t) => t.id);
 }
