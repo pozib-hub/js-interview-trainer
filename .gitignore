@@ -11,4 +11,5 @@ tasks/**/.user-solution.ts
 .npmrc
 data.json
 public/tasks.json
+public/tasks/
 tsconfig.tsbuildinfo
