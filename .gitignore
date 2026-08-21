@@ -9,3 +9,6 @@ next-env.d.ts
 tasks/**/.user-solution.ts
 .vitest-cache
 .npmrc
+data.json
+public/tasks.json
+tsconfig.tsbuildinfo
