@@ -6,6 +6,9 @@ import Providers from "./providers";
 export const metadata: Metadata = {
   title: "Interview Trainer",
   description: "Тренажёр задач для подготовки к техническим собеседованиям",
+  icons: {
+    icon: "/favicon.svg",
+  },
 };
 
 export default function RootLayout({
