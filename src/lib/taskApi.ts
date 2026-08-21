@@ -28,9 +28,9 @@ export async function fetchTopics(): Promise<Record<string, TaskSummary[]>> {
 
 export async function fetchTask(id: string): Promise<TaskFull | null> {
   if (isStatic) {
-    const res = await apiFetch("/tasks.json");
-    const data = await res.json();
-    return data.tasks?.find((t: TaskFull) => t.id === id) ?? null;
+    const res = await apiFetch(`/tasks/${id}.json`);
+    if (!res.ok) return null;
+    return res.json();
   }
   const res = await fetch(`/api/task/${encodeURIComponent(id)}`);
   if (!res.ok) return null;

@@ -5,7 +5,9 @@ import { fileURLToPath } from "url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const TASKS_ROOT = path.resolve(__dirname, "../tasks");
-const OUT_FILE = path.resolve(__dirname, "../public/tasks.json");
+const OUT_DIR = path.resolve(__dirname, "../public");
+const INDEX_FILE = path.join(OUT_DIR, "tasks.json");
+const TASKS_OUT_DIR = path.join(OUT_DIR, "tasks");
 
 function readSafe(dir, name, fallback = "") {
   try {
@@ -46,21 +48,27 @@ function walk(dir, acc) {
       .map((h) => h.trim())
       .filter(Boolean);
 
-    acc.push({
-      id: parts.join("/"),
+    const id = parts.join("/");
+    const summary = {
+      id,
       topic: topicName,
       slug,
       title: meta.title,
       difficulty: meta.difficulty,
       tags: meta.tags || [],
       language: meta.language || "typescript",
+      exports: meta.exports || [],
+    };
+    const full = {
+      ...summary,
       condition: readSafe(dir, "condition.md"),
       template: readSafe(dir, "template.ts", "export {}"),
       hints,
       solution: readSafe(dir, "solution.ts"),
       testFile: readSafe(dir, path.join("tests", "test.ts")),
-      exports: meta.exports || [],
-    });
+    };
+
+    acc.push({ summary, full });
     return;
   }
 
@@ -71,18 +79,31 @@ function walk(dir, acc) {
   }
 }
 
-const tasks = [];
-walk(TASKS_ROOT, tasks);
-tasks.sort((a, b) => a.topic.localeCompare(b.topic) || a.slug.localeCompare(b.slug));
+const all = [];
+walk(TASKS_ROOT, all);
+all.sort((a, b) => a.summary.topic.localeCompare(b.summary.topic) || a.summary.slug.localeCompare(b.summary.slug));
 
+// Build index: metadata only (no solution/testFile)
+const summaries = all.map((t) => t.summary);
 const byTopic = {};
-for (const t of tasks) {
+for (const t of summaries) {
   if (!byTopic[t.topic]) byTopic[t.topic] = [];
   byTopic[t.topic].push(t);
 }
 
-const output = { tasks, topics: byTopic };
-fs.mkdirSync(path.dirname(OUT_FILE), { recursive: true });
-fs.writeFileSync(OUT_FILE, JSON.stringify(output, null, 2), "utf8");
+fs.mkdirSync(OUT_DIR, { recursive: true });
+fs.writeFileSync(INDEX_FILE, JSON.stringify({ tasks: summaries, topics: byTopic }, null, 2), "utf8");
+console.log(`Built index: ${summaries.length} tasks → ${INDEX_FILE}`);
 
-console.log(`Built ${tasks.length} tasks → ${OUT_FILE}`);
+// Build individual task files with full data (solution, tests, etc.)
+fs.rmSync(TASKS_OUT_DIR, { recursive: true, force: true });
+fs.mkdirSync(TASKS_OUT_DIR, { recursive: true });
+
+for (const t of all) {
+  const dir = path.join(TASKS_OUT_DIR, t.summary.topic);
+  fs.mkdirSync(dir, { recursive: true });
+  const outFile = path.join(dir, `${t.summary.slug}.json`);
+  fs.writeFileSync(outFile, JSON.stringify(t.full, null, 2), "utf8");
+}
+
+console.log(`Built ${all.length} individual task files → ${TASKS_OUT_DIR}/`);
