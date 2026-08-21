@@ -166,7 +166,7 @@ function InterviewInner() {
     return (
       <InterviewSetupPhase
         allTasks={allTasks}
-        app={app as any}
+        app={app}
         startInterview={startInterview}
       />
     );
