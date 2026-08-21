@@ -70,9 +70,11 @@ export async function runTaskTests(
       "vitest-worker.mts"
     );
 
-    const { stdout, stderr } = await new Promise<{
+    const { stdout, stderr, error, timedOut } = await new Promise<{
       stdout: string;
       stderr: string;
+      error: Error | null;
+      timedOut: boolean;
     }>((resolve) => {
       execFile(
         process.execPath,
@@ -88,18 +90,44 @@ export async function runTaskTests(
           maxBuffer: 4 << 20,
           env: { ...process.env, NODE_NO_WARNINGS: "1" },
         },
-        (_err, out, serr) =>
-          resolve({ stdout: out || "", stderr: serr || "" })
+        (err, out, serr) =>
+          resolve({
+            stdout: out || "",
+            stderr: serr || "",
+            error: err,
+            timedOut: !!err && (err as NodeJS.ErrnoException).code === "ETIMEDOUT",
+          })
       );
     });
 
+    if (timedOut) {
+      return {
+        taskId,
+        passed: false,
+        total: 0,
+        failed: 0,
+        assertions: [],
+        stdout: "",
+        stderr: "Превышен лимит времени исполнения (20с)",
+        durationMs: Date.now() - start,
+      };
+    }
+
+    // Read result.json from file (written by vitest-worker.mts) instead of parsing stdout
+    const jsonOutPath = path.join(tmpDir, "result.json");
     let parsed: VitestJSON | null = null;
-    const jsonStart = stdout.indexOf("{");
-    if (jsonStart >= 0) {
-      try {
-        parsed = JSON.parse(stdout.slice(jsonStart)) as VitestJSON;
-      } catch {
-        // JSON не сформировался
+    try {
+      const raw = fs.readFileSync(jsonOutPath, "utf8");
+      parsed = JSON.parse(raw) as VitestJSON;
+    } catch {
+      // result.json not available — fall back to stdout parsing
+      const jsonStart = stdout.indexOf("{");
+      if (jsonStart >= 0) {
+        try {
+          parsed = JSON.parse(stdout.slice(jsonStart)) as VitestJSON;
+        } catch {
+          // JSON не сформировался
+        }
       }
     }
 
@@ -135,6 +163,10 @@ export async function runTaskTests(
       .join("\n")
       .trim();
 
+    const errorStderr = error && !timedOut
+      ? `Ошибка запуска: ${error.message}`
+      : "";
+
     return {
       taskId,
       passed: failed === 0 && total > 0,
@@ -142,7 +174,9 @@ export async function runTaskTests(
       failed,
       assertions,
       stdout: "",
-      stderr: parsed ? cleanStderr : cleanStderr || stdout.trim().slice(0, 500),
+      stderr: parsed
+        ? cleanStderr || errorStderr
+        : cleanStderr || errorStderr || stdout.trim().slice(0, 500),
       durationMs: Date.now() - start,
     };
   } finally {
