@@ -7,8 +7,6 @@
   ],
   "language": "typescript",
   "exports": [
-    "twoSum",
-    "findSumPairs",
     "findSumPairs"
   ]
 }

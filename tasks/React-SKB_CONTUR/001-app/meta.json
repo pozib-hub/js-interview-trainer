@@ -12,8 +12,6 @@
     "addProduct",
     "removeProduct",
     "updateProduct",
-    "removeProduct",
-    "updateProduct",
     "sendProducts"
   ]
 }

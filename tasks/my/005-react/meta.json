@@ -7,10 +7,7 @@
   "language": "typescript",
   "exports": [
     "App",
-    "App",
     "onMouseLive",
-    "onMouseEnter",
-    "onMouseEnter",
-    "onMouseLive"
+    "onMouseEnter"
   ]
 }
