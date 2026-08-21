@@ -33,6 +33,9 @@ jobs:
       - name: Typecheck
         run: npm run typecheck
 
+      - name: Validate tasks
+        run: node scripts/validate-tasks.mjs
+
       - name: Lint
         run: npm run lint
         continue-on-error: true
