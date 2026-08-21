@@ -38,7 +38,10 @@ export async function readData(): Promise<AppData> {
 }
 
 export async function writeData(data: AppData): Promise<void> {
-  await fs.writeFile(DATA_FILE, JSON.stringify(data, null, 2), "utf-8");
+  // Atomic write: write to temp file, then rename
+  const tmp = DATA_FILE + ".tmp";
+  await fs.writeFile(tmp, JSON.stringify(data, null, 2), "utf-8");
+  await fs.rename(tmp, DATA_FILE);
 }
 
 export async function patchData(

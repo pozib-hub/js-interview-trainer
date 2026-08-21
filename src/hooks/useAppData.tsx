@@ -94,6 +94,18 @@ export interface AppDataContextValue {
 
 const AppDataContext = createContext<AppDataContextValue | null>(null);
 
+/**
+ * Объединяет сессии из двух источников по id, отдавая предпочтение более свежей.
+ */
+function mergeSessions(a: InterviewSession[], b: InterviewSession[]): InterviewSession[] {
+  const map = new Map<string, InterviewSession>();
+  for (const s of [...a, ...b]) {
+    const existing = map.get(s.id);
+    if (!existing || s.date > existing.date) map.set(s.id, s);
+  }
+  return Array.from(map.values()).sort((x, y) => y.date - x.date);
+}
+
 export function useAppData() {
   const ctx = useContext(AppDataContext);
   if (!ctx) throw new Error("useAppData must be used within AppDataProvider");
@@ -124,25 +136,21 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         const res = await apiFetch("/api/data");
         if (res.ok) {
           const server = (await res.json()) as AppData;
+          // Union merge: combine both sides without losing data
           const merged: AppData = {
-            solved: server.solved.length >= local.solved.length
-              ? server.solved
-              : local.solved,
-            sessions: server.sessions.length >= local.sessions.length
-              ? server.sessions
-              : local.sessions,
-            code: Object.keys(server.code).length >= Object.keys(local.code).length
-              ? server.code
-              : local.code,
+            solved: Array.from(new Set([...server.solved, ...local.solved])),
+            sessions: mergeSessions(server.sessions, local.sessions),
+            code: { ...server.code, ...local.code },
             layout: server.layout ?? local.layout,
           };
           setData(merged);
           dataRef.current = merged;
           saveToStorage(merged);
+          // Push merged state back to server if it differs
           if (
-            local.solved.length > server.solved.length ||
-            local.sessions.length > server.sessions.length ||
-            Object.keys(local.code).length > Object.keys(server.code).length
+            merged.solved.length > server.solved.length ||
+            merged.sessions.length > server.sessions.length ||
+            Object.keys(merged.code).length > Object.keys(server.code).length
           ) {
             apiFetch("/api/data", {
               method: "POST",
