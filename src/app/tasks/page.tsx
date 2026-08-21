@@ -1,10 +1,14 @@
+"use client";
+
+import { EmptyState, Typography } from "@ui/index";
+
 export default function TasksEmptyPage() {
   return (
-    <div className="empty-state">
-      <div style={{ textAlign: "center" }}>
-        <div style={{ fontSize: 32, marginBottom: 12 }}>👈</div>
+    <EmptyState>
+      <Typography align="center">
+        <Typography size={32} mb={12}>👈</Typography>
         Выберите задачу слева, чтобы начать
-      </div>
-    </div>
+      </Typography>
+    </EmptyState>
   );
 }

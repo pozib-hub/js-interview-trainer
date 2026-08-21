@@ -1,8 +1,8 @@
 "use client";
 
 import { type ReactNode } from "react";
-import { AppDataProvider } from "@/lib/useAppData";
-import { LayoutProvider } from "@/lib/useResizableLayout";
+import { AppDataProvider } from "@hooks/useAppData";
+import { LayoutProvider } from "@hooks/useResizableLayout";
 
 export default function Providers({ children }: { children: ReactNode }) {
   return (

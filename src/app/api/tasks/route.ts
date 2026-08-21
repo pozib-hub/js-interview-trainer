@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { listTasks } from "@/lib/scanner";
+import { listTasks } from "@lib/scanner";
 
 export const revalidate = 3600;
 

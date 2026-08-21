@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getTask } from "@/lib/scanner";
+import { getTask } from "@lib/scanner";
 
 export async function GET(
   _req: Request,

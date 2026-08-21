@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { runTaskTests } from "@/lib/runner";
+import { runTaskTests } from "@lib/runner";
 
 export async function POST(req: Request) {
   let body: { taskId?: string; code?: string };

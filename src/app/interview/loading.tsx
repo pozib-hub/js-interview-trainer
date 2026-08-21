@@ -1,13 +1,17 @@
+"use client";
+
+import { Box, Spacer, Spinner } from "@ui/index";
+
 export default function Loading() {
   return (
-    <div className="app-shell">
-      <header className="app-header">
+    <div className="AppShell">
+      <header className="AppHeader">
         <h1>Interview Trainer</h1>
-        <div className="spacer" />
+        <Spacer />
       </header>
-      <div className="main" style={{ alignItems: "center", justifyContent: "center" }}>
-        <span className="spinner" style={{ width: 24, height: 24, borderWidth: 3 }} />
-      </div>
+      <Box className="Main" alignItems="center" justifyContent="center">
+        <Spinner size="big" />
+      </Box>
     </div>
   );
 }

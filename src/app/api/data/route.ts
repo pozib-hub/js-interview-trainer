@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { readData, patchData, type AppData } from "@/lib/fileStorage";
+import { readData, patchData, type AppData } from "@lib/fileStorage";
 
 export async function GET() {
   const data = await readData();

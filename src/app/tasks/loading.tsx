@@ -1,26 +1,35 @@
+"use client";
+
+import { Box, Skeleton, Spacer, Spinner, Typography } from "@ui/index";
+
 export default function Loading() {
   return (
-    <div className="app-shell">
-      <header className="app-header">
+    <div className="AppShell">
+      <header className="AppHeader">
         <h1>Interview Trainer</h1>
-        <span style={{ color: "var(--text-muted)", fontSize: 12 }}>
-          <span className="spinner" style={{ marginRight: 6 }} />
+        <Typography color="text-muted" size={12}>
+          <Spinner mr={6} />
           Загрузка…
-        </span>
-        <div className="spacer" />
+        </Typography>
+        <Spacer />
       </header>
-      <div className="app-body">
-        <aside className="sidebar" style={{ width: 280, flexShrink: 0 }}>
-          <div style={{ padding: 16 }}>
-            <div className="skeleton skeleton-line" style={{ width: "60%" }} />
-            <div className="skeleton skeleton-line" style={{ width: "80%" }} />
-            <div className="skeleton skeleton-line" style={{ width: "50%" }} />
-            <div className="skeleton skeleton-line" style={{ width: "70%" }} />
-          </div>
+      <div className="AppBody">
+        <aside className="Sidebar" style={{ width: 280, flexShrink: 0 }}>
+          <Box p={16}>
+            <Skeleton line width="60%" />
+            <Skeleton line width="80%" />
+            <Skeleton line width="50%" />
+            <Skeleton line width="70%" />
+          </Box>
         </aside>
-        <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <span className="spinner" style={{ width: 24, height: 24, borderWidth: 3 }} />
-        </div>
+        <Box
+          flex={1}
+          display="flex"
+          alignItems="center"
+          justifyContent="center"
+        >
+          <Spinner size="big" />
+        </Box>
       </div>
     </div>
   );

@@ -1,15 +1,12 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useState } from "react";
-import type { TaskSummary } from "@/lib/types";
-import TaskTree from "@/components/TaskTree";
-import {
-  useResizableLayout,
-  DragHandle,
-} from "@/lib/useResizableLayout";
-import { useAppData } from "@/lib/useAppData";
-import { fetchTopics } from "@/lib/taskApi";
+import type { TaskSummary } from "@lib/types";
+import TaskTree from "@components/TaskTree";
+import { useResizableLayout, DragHandle } from "@hooks/useResizableLayout";
+import { useAppData } from "@hooks/useAppData";
+import { fetchTopics } from "@lib/taskApi";
+import { Box, Button, Skeleton, Spacer, Spinner, Typography } from "@ui/index";
 
 export default function TasksLayout({
   children,
@@ -35,37 +32,41 @@ export default function TasksLayout({
   };
 
   return (
-    <div className="app-shell">
-      <header className="app-header">
+    <div className="AppShell">
+      <header className="AppHeader">
         <h1>Interview Trainer</h1>
-        <span style={{ color: "var(--text-muted)", fontSize: 12 }}>
+        <Typography color="text-muted" size={12}>
           {loadingTasks ? (
-            <><span className="spinner" style={{ marginRight: 6 }} />Загрузка…</>
+            <>
+              <Spinner mr={6} />
+              Загрузка…
+            </>
           ) : (
-            <>{taskCount} задач{app.solvedList.length > 0 && (
-              <span style={{ marginLeft: 8, color: "var(--green)" }}>
-                • решено: {app.solvedList.length}
-              </span>
-            )}</>
+            <>
+              {taskCount} задач
+              {app.solvedList.length > 0 && (
+                <Typography tag="span" color="green" ml={8}>
+                  • решено: {app.solvedList.length}
+                </Typography>
+              )}
+            </>
           )}
-        </span>
-        <div className="spacer" />
+        </Typography>
+        <Spacer />
         {app.solvedList.length > 0 && (
-          <button
-            className="btn btn-sm"
+          <Button
+            size="sm"
             onClick={handleClearSolved}
             title="Сбросить все решённые задачи"
           >
             Сбросить решённые
-          </button>
+          </Button>
         )}
-        <Link href="/interview" className="btn btn-sm" style={{ textDecoration: "none" }}>
-          🎯 Собеседование
-        </Link>
+        <Button size="sm" href="/interview">🎯 Собеседование</Button>
       </header>
-      <div className="app-body" ref={containerRef}>
+      <div className="AppBody" ref={containerRef}>
         <aside
-          className="sidebar"
+          className="Sidebar"
           style={{ width: layout.sidebar, flexShrink: 0 }}
         >
           <TaskTree
@@ -74,17 +75,19 @@ export default function TasksLayout({
             onToggleSolved={app.toggleSolved}
           />
           {loadingTasks && (
-            <div style={{ padding: 16 }}>
-              <div className="skeleton skeleton-line" style={{ width: "60%" }} />
-              <div className="skeleton skeleton-line" style={{ width: "80%" }} />
-              <div className="skeleton skeleton-line" style={{ width: "50%" }} />
-              <div className="skeleton skeleton-line" style={{ width: "70%" }} />
-              <div className="skeleton skeleton-line" style={{ width: "65%" }} />
-            </div>
+            <Box p={16}>
+              <Skeleton line width="60%" />
+              <Skeleton line width="80%" />
+              <Skeleton line width="50%" />
+              <Skeleton line width="70%" />
+              <Skeleton line width="65%" />
+            </Box>
           )}
         </aside>
-        <DragHandle onMouseDown={(e) => startDrag("sidebar", e)} />
-        <main className="main">{children}</main>
+        <DragHandle
+          onMouseDown={(e: React.MouseEvent) => startDrag("sidebar", e)}
+        />
+        <main className="Main">{children}</main>
       </div>
     </div>
   );
