@@ -24,7 +24,13 @@ COPY --from=builder /app/public ./public
 COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package.json ./package.json
+COPY --from=builder /app/next.config.ts ./next.config.ts
+COPY --from=builder /app/tsconfig.json ./tsconfig.json
 COPY --from=builder /app/src ./src
+COPY --from=builder /app/tasks ./tasks
+
+# Ensure data.json exists (writable user state file)
+RUN echo '{"solved":[],"sessions":[],"code":{},"layout":{"sidebar":280,"leftPane":420}}' > data.json
 
 EXPOSE 3000
 
