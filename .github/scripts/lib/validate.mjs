@@ -100,6 +100,16 @@ export function validateTask(t, opts = {}) {
     }
   }
 
+  // condition should not contain examples (they go in `examples` array)
+  if (typeof t.condition === "string" && t.examples?.length > 0) {
+    // Heuristic: if condition contains "Примеры" or lines like "→" / "=>" with results
+    if (/^#{1,2}\s*Пример[ыы]/im.test(t.condition) || /\b[вВ]озвращ|→|=>\s*['"\d]/.test(t.condition)) {
+      errors.push(
+        "condition содержит примеры — убери их, примеры должны быть только в массиве `examples`. Генератор сам добавит секцию ## Примеры.",
+      );
+    }
+  }
+
   // sanity: solution exports the declared symbol
   if (typeof t.solutionCode === "string" && typeof t.exports?.[0] === "string") {
     const re = new RegExp(`export(?:\\s+const|\\s+function)\\s+${escapeReg(t.exports[0])}\\b`);
