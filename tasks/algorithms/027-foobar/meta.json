@@ -1,0 +1,12 @@
+{
+  "title": "FooBar (FizzBuzz)",
+  "difficulty": "easy",
+  "tags": [
+    "algorithms",
+    "math"
+  ],
+  "language": "typescript",
+  "exports": [
+    "foobar"
+  ]
+}
