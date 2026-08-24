@@ -1,9 +1,8 @@
-// Minimal OpenAI-compatible chat completions client.
-// Uses native fetch (Node 22). Supports DeepSeek, OpenAI, OpenRouter, Groq, etc.
-// No SDK dependency — fully pluggable via env vars.
+// Минимальный OpenAI-compatible клиент.
+// Нативный fetch (Node 22), без SDK.
+// Поддержка: DeepSeek, OpenAI, OpenRouter, Groq и др.
 
 const DEFAULTS = {
-  // DeepSeek is OpenAI-compatible: https://api.deepseek.com/v1
   baseUrl: process.env.LLM_BASE_URL || "https://api.deepseek.com/v1",
   model: process.env.LLM_MODEL || "deepseek-chat",
   apiKey:
@@ -11,36 +10,35 @@ const DEFAULTS = {
     process.env.DEEPSEEK_API_KEY ||
     process.env.OPENAI_API_KEY ||
     "",
-  // Optional retry config.
   maxRetries: Number(process.env.LLM_MAX_RETRIES || "2"),
   timeoutMs: Number(process.env.LLM_TIMEOUT_MS || "90000"),
 };
 
+export class LLMError extends Error {
+  constructor(message, detail) {
+    super(message);
+    this.detail = detail;
+  }
+}
+
 /**
- * Call the LLM and return the parsed JSON object.
- * Uses response_format json_object (widely supported across OpenAI-compatible
- * providers). The schema is also embedded in the system message to guide
- * structured output (works even where strict json_schema is unsupported).
+ * Вызов LLM с массивом сообщений (поддержка retry с обратной связью).
  *
  * @param {object} opts
- * @param {string} opts.systemMessage
- * @param {string} opts.userMessage
- * @returns {Promise<Record<string, unknown>>}
+ * @param {Array<{role: string, content: string}>} opts.messages
+ * @returns {Promise<Record<string, unknown>>} распарсенный JSON
  */
-export async function callLLM({ systemMessage, userMessage }) {
+export async function callLLM({ messages }) {
   const { baseUrl, model, apiKey, maxRetries, timeoutMs } = DEFAULTS;
   if (!apiKey) {
     throw new Error(
-      "LLM API key not set. Define LLM_API_KEY (or DEEPSEEK_API_KEY / OPENAI_API_KEY) in the environment / GitHub Secrets.",
+      "LLM API key not задан. Определи LLM_API_KEY (или DEEPSEEK_API_KEY / OPENAI_API_KEY).",
     );
   }
 
   const body = {
     model,
-    messages: [
-      { role: "system", content: systemMessage },
-      { role: "user", content: userMessage },
-    ],
+    messages,
     temperature: 0.2,
     response_format: { type: "json_object" },
   };
@@ -63,7 +61,6 @@ export async function callLLM({ systemMessage, userMessage }) {
       });
 
       if (res.status === 429 || res.status >= 500) {
-        // Transient — retry with backoff.
         lastErr = new Error(`LLM transient error: ${res.status} ${res.statusText}`);
         await sleep(1500 * (attempt + 1));
         continue;
@@ -79,9 +76,9 @@ export async function callLLM({ systemMessage, userMessage }) {
       const data = await res.json();
       const content = data?.choices?.[0]?.message?.content;
       if (!content) {
-        throw new LLMError("LLM returned empty content", JSON.stringify(data).slice(0, 500));
+        throw new LLMError("LLM вернул пустой контент", JSON.stringify(data).slice(0, 500));
       }
-      return parseJsonContent(content);
+      return { task: parseJsonContent(content), rawContent: content };
     } catch (e) {
       if (e instanceof LLMError) throw e;
       lastErr = e;
@@ -96,16 +93,9 @@ export async function callLLM({ systemMessage, userMessage }) {
   throw lastErr || new Error("LLM call failed after retries");
 }
 
-class LLMError extends Error {
-  constructor(message, detail) {
-    super(message);
-    this.detail = detail;
-  }
-}
-
 /**
- * Parse the model's content into a JSON object, tolerating fenced code blocks
- * and leading prose.
+ * Парсинг ответа модели в JSON.
+ * Толерантен к fenced code blocks и prose вокруг JSON.
  */
 export function parseJsonContent(content) {
   let txt = content.trim();

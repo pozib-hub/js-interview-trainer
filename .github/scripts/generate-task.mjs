@@ -35,6 +35,9 @@ const REFERENCE_TASKS = [
   ["algorithms", "010-fibonacci"],
 ];
 
+// Сколько раз пытаться исправить ответ LLM через обратную связь.
+const VALIDATION_RETRIES = Number(process.env.VALIDATION_RETRIES || "2");
+
 // Накапливаем логи для файла-артефакта.
 const logLines = [];
 let stepNum = 0;
@@ -130,45 +133,77 @@ async function main() {
   log(`   Модель: ${process.env.LLM_MODEL || "deepseek-chat"}`);
   log(`   Endpoint: ${process.env.LLM_BASE_URL || "https://api.deepseek.com/v1"}`);
 
-  // ─── Шаг 4: Вызов LLM ─────────────────────────────────────────────────
-  step("Вызов LLM");
-  log("   Отправляю запрос...");
-  let task;
-  try {
-    task = await callLLM({ systemMessage, userMessage });
-  } catch (e) {
-    fail(`Ошибка вызова LLM: ${e.message}${e.detail ? `\nДетали: ${e.detail}` : ""}`);
-  }
-  log(`   Получен ответ: ${JSON.stringify(task).length} символов`);
-  log(`   title:       ${task.title || "(нет)"}`);
-  log(`   topic:       ${task.topic || "(нет)"}`);
-  log(`   slug:        ${task.slug || "(нет)"}`);
-  log(`   difficulty:  ${task.difficulty || "(нет)"}`);
-  log(`   exports:     ${JSON.stringify(task.exports)}`);
-  log(`   tags:        ${JSON.stringify(task.tags)}`);
-  log(`   examples:    ${(task.examples || []).length} шт.`);
-  log(`   constraints: ${(task.constraints || []).length} шт.`);
-  log(`   hints:       ${(task.hints || []).length} шт.`);
-  log(`   source:      ${task.source ? task.source.url : "(нет)"}`);
-  log(`   solutionCode: ${task.solutionCode?.length || 0} символов`);
-  log(`   testCode:     ${task.testCode?.length || 0} символов`);
-  log(`   templateCode: ${task.templateCode?.length || 0} символов`);
-  log(`   condition:    ${task.condition?.length || 0} символов`);
+  // ─── Шаги 4-5: Вызов LLM + валидация (с retry по обратной связи) ──────
+  step("Вызов LLM и валидация (с retry)");
 
-  // ─── Шаг 5: Валидация ─────────────────────────────────────────────────
-  step("Валидация JSON (schema + семантика + уникальность slug)");
-  const errors = validateTask(task, { allowedTopics, tasksRoot: TASKS_ROOT });
-  if (errors.length) {
-    log(`   Найдено ${errors.length} ошибок валидации:`);
+  const messages = [
+    { role: "system", content: systemMessage },
+    { role: "user", content: userMessage },
+  ];
+
+  let task = null;
+  let lastErrors = [];
+
+  for (let attempt = 0; attempt <= VALIDATION_RETRIES; attempt++) {
+    if (attempt > 0) {
+      log(`\n   🔁 Попытка ${attempt + 1}/${VALIDATION_RETRIES + 1} (исправление по ошибкам)`);
+      // Отправляем ошибки валидации обратно в LLM как обратную связь.
+      messages.push({
+        role: "assistant",
+        content: JSON.stringify(task),
+      });
+      messages.push({
+        role: "user",
+        content: buildValidationFeedback(lastErrors, task),
+      });
+    } else {
+      log("   Отправляю первый запрос...");
+    }
+
+    try {
+      const result = await callLLM({ messages });
+      task = result.task;
+    } catch (e) {
+      fail(`Ошибка вызова LLM: ${e.message}${e.detail ? `\nДетали: ${e.detail}` : ""}`);
+    }
+
+    log(`   Получен ответ: ${JSON.stringify(task).length} символов`);
+    log(`     title:       ${task.title || "(нет)"}`);
+    log(`     topic:       ${task.topic || "(нет)"}`);
+    log(`     slug:        ${task.slug || "(нет)"}`);
+    log(`     difficulty:  ${task.difficulty || "(нет)"}`);
+    log(`     exports:     ${JSON.stringify(task.exports)}`);
+    log(`     tags:        ${JSON.stringify(task.tags)}`);
+    log(`     examples:    ${(task.examples || []).length} шт.`);
+    log(`     constraints: ${(task.constraints || []).length} шт.`);
+    log(`     hints:       ${(task.hints || []).length} шт.`);
+    log(`     source:      ${task.source ? task.source.url : "(нет)"}`);
+    log(`     solutionCode: ${task.solutionCode?.length || 0} символов`);
+    log(`     testCode:     ${task.testCode?.length || 0} символов`);
+    log(`     templateCode: ${task.templateCode?.length || 0} символов`);
+    log(`     condition:    ${task.condition?.length || 0} символов`);
+
+    // Валидация
+    const errors = validateTask(task, { allowedTopics, tasksRoot: TASKS_ROOT });
+    if (errors.length === 0) {
+      log("   ✓ Валидация пройдена");
+      break;
+    }
+
+    lastErrors = errors;
+    log(`   ⚠ Найдено ${errors.length} ошибок валидации:`);
     for (const e of errors) log(`     • ${e}`);
-    fail(
-      "LLM вернул невалидный результат:\n" +
-        errors.map((e) => `  - ${e}`).join("\n") +
-        "\n\nСырой ответ LLM:\n" +
-        JSON.stringify(task, null, 2),
-    );
+
+    if (attempt >= VALIDATION_RETRIES) {
+      fail(
+        `LLM вернул невалидный результат после ${attempt + 1} попыток:\n` +
+          errors.map((e) => `  - ${e}`).join("\n") +
+          "\n\nСырой ответ LLM (последняя попытка):\n" +
+          JSON.stringify(task, null, 2),
+      );
+    }
+    log(`   → Отправляю ошибки обратно в LLM для исправления...`);
   }
-  log("   ✓ Валидация пройдена");
 
   // ─── Шаг 6: Генерация файлов ──────────────────────────────────────────
   step("Генерация файлов задачи");
@@ -309,6 +344,35 @@ function buildPrPreview(task, taskId, files) {
 
 function fold(name, lang, content) {
   return `<details><summary>${name}</summary>\n\n\`\`\`${lang}\n${content}\`\`\`\n</details>`;
+}
+
+/**
+ * Формирует сообщение обратной связи для LLM при ошибках валидации.
+ * LLM видит свои ошибки и может их исправить.
+ */
+function buildValidationFeedback(errors, task) {
+  const lines = [
+    "Твой предыдущий ответ содержит ошибки валидации. Исправь их и верни обновлённый JSON.",
+    "",
+    "## Ошибки:",
+  ];
+  for (const e of errors) lines.push(`- ${e}`);
+  lines.push("");
+  lines.push("## Частые проблемы с экранированием:");
+  lines.push("- Внутри JSON-строк кавычки экранируются как \\\" (один обратный слеш + кавычка).");
+  lines.push("- НЕ экранируй скобки, точки с запятой и прочие спецсимволы.");
+  lines.push("- `import { test, expect } from \"vitest\";` должно выглядеть в JSON так:");
+  lines.push("  \\\"import { test, expect } from \\\\\"vitest\\\\\";\\\"");
+  lines.push("- `import { foo } from \"../solution\";` должно выглядеть в JSON так:");
+  lines.push("  \\\"import { foo } from \\\\\"../solution\\\\\";\\\"");
+  lines.push("");
+  lines.push("## Твой предыдущий ответ (для справки):");
+  lines.push("```json");
+  lines.push(JSON.stringify(task, null, 2));
+  lines.push("```");
+  lines.push("");
+  lines.push("Верни ИСПРАВЛЕННЫЙ JSON по той же JSON Schema. Только JSON, без пояснений.");
+  return lines.join("\n");
 }
 
 main().catch((e) => fail(e?.stack || String(e)));
