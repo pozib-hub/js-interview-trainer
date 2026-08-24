@@ -1,0 +1,14 @@
+{
+  "title": "FizzBuzz (FooBar)",
+  "difficulty": "easy",
+  "tags": [
+    "algorithms",
+    "fizz-buzz",
+    "loops",
+    "modulo"
+  ],
+  "language": "typescript",
+  "exports": [
+    "fizzBuzz"
+  ]
+}
