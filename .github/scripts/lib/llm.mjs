@@ -96,23 +96,41 @@ export async function callLLM({ messages }) {
 /**
  * Парсинг ответа модели в JSON.
  * Толерантен к fenced code blocks и prose вокруг JSON.
+ *
+ * Важно: внутри JSON-строк могут быть ```-блоки (код в ответах на вопросы),
+ * поэтому regex-извлечение фенсов применяем только после неудачного
+ * прямого парсинга — иначе вырежется содержимое JSON-строк.
  */
 export function parseJsonContent(content) {
   let txt = content.trim();
-  const fence = txt.match(/```(?:json)?\s*([\s\S]*?)```/i);
-  if (fence) txt = fence[1].trim();
-  if (!txt.startsWith("{")) {
-    const start = txt.indexOf("{");
-    const end = txt.lastIndexOf("}");
-    if (start !== -1 && end !== -1 && end > start) {
-      txt = txt.slice(start, end + 1);
-    }
-  }
+
+  // Быстрый путь: контент уже валидный JSON (обычный случай с json_object)
   try {
     return JSON.parse(txt);
-  } catch (e) {
-    throw new LLMError(`LLM вернул невалидный JSON: ${e.message}`, txt.slice(0, 2000));
+  } catch {}
+
+  // Fenced: срезаем первую строку ```/```json и завершающий ```
+  if (txt.startsWith("```")) {
+    const firstNl = txt.indexOf("\n");
+    if (firstNl !== -1) {
+      let inner = txt.slice(firstNl + 1);
+      const lastFence = inner.lastIndexOf("```");
+      if (lastFence !== -1) inner = inner.slice(0, lastFence);
+      inner = inner.trim();
+      try {
+        return JSON.parse(inner);
+      } catch {}
+    }
   }
+
+  // Prose вокруг JSON: вырезаем внешние фигурные скобки
+  const start = txt.indexOf("{");
+  const end = txt.lastIndexOf("}");
+  if (start !== -1 && end !== -1 && end > start) {
+    return JSON.parse(txt.slice(start, end + 1));
+  }
+
+  throw new LLMError("LLM вернул невалидный JSON: нет JSON-объекта в ответе", txt.slice(0, 2000));
 }
 
 function sleep(ms) {
