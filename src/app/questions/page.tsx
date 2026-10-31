@@ -2,8 +2,9 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Box, EmptyState, Skeleton, Typography } from "@ui/index";
-import type { QuestionsIndex } from "@lib/types";
-import { fetchQuestionsIndex, directionQuestionCount } from "@lib/questionsApi";
+import type { QuestionsIndex, UserQuestion } from "@lib/types";
+import { fetchQuestionsIndex, directionQuestionCount, categoryLabel } from "@lib/questionsApi";
+import { useUserQuestions } from "@hooks/useUserQuestions";
 import { normalizeQuery } from "./components/QuestionsBrowser";
 import SearchBox from "./components/SearchBox";
 import styles from "./questions.module.css";
@@ -16,7 +17,11 @@ interface SearchResultItem {
 
 const MAX_RESULTS = 50;
 
-function searchAll(index: QuestionsIndex, query: string): SearchResultItem[] {
+function searchAll(
+  index: QuestionsIndex,
+  query: string,
+  userQuestions: UserQuestion[]
+): SearchResultItem[] {
   const q = normalizeQuery(query);
   if (q.length < 2) return [];
 
@@ -52,20 +57,35 @@ function searchAll(index: QuestionsIndex, query: string): SearchResultItem[] {
     }
   }
 
+  // Свои вопросы — тоже участвуют в поиске
+  for (const uq of userQuestions) {
+    const matches =
+      normalizeQuery(uq.question).includes(q) ||
+      normalizeQuery(uq.answer).includes(q);
+    if (matches) {
+      results.push({
+        question: uq.question,
+        href: `/questions/my?focus=${encodeURIComponent(uq.id)}`,
+        path: ["Мои вопросы", categoryLabel(index, uq.category || "")],
+      });
+    }
+  }
+
   return results;
 }
 
 export default function QuestionsHomePage() {
   const [index, setIndex] = useState<QuestionsIndex | null>(null);
   const [query, setQuery] = useState("");
+  const { questions: userQuestions } = useUserQuestions();
 
   useEffect(() => {
     fetchQuestionsIndex().then(setIndex).catch(() => setIndex({ directions: [] }));
   }, []);
 
   const results = useMemo(
-    () => (index ? searchAll(index, query) : []),
-    [index, query]
+    () => (index ? searchAll(index, query, userQuestions) : []),
+    [index, query, userQuestions]
   );
   const searching = normalizeQuery(query).length >= 2;
 
@@ -112,31 +132,41 @@ export default function QuestionsHomePage() {
           <EmptyState>
             <Typography align="center">Ничего не найдено.</Typography>
             <Typography align="center" color="text-muted" size={12} mt={6}>
-              Попробуйте другой запрос.
+              Попробуйте другой запрос или добавьте свой вопрос в разделе
+              «Мои вопросы».
             </Typography>
           </EmptyState>
         )
       )}
 
       {index && !searching && (
-        <div className={styles.Grid}>
-          {index.directions.map((direction) => (
-            <a
-              key={direction.id}
-              href={`/questions/${direction.id}`}
-              className={styles.Card}
-            >
-              <h3 className={styles.CardTitle}>{direction.title}</h3>
-              <p className={styles.CardDesc}>{direction.description}</p>
-              <div className={styles.CardMeta}>
-                {direction.technologies.length > 0
-                  ? `${direction.technologies.length} технологий · `
-                  : ""}
-                {directionQuestionCount(direction)} вопросов
-              </div>
+        <>
+          <div className={styles.Grid}>
+            <a href="/questions/my" className={`${styles.Card} ${styles.CardAccent}`}>
+              <h3 className={styles.CardTitle}>⭐ Мои вопросы</h3>
+              <p className={styles.CardDesc}>
+                Собственные вопросы с ответами — хранятся локально в браузере
+              </p>
+              <div className={styles.CardMeta}>{userQuestions.length} вопросов</div>
             </a>
-          ))}
-        </div>
+            {index.directions.map((direction) => (
+              <a
+                key={direction.id}
+                href={`/questions/${direction.id}`}
+                className={styles.Card}
+              >
+                <h3 className={styles.CardTitle}>{direction.title}</h3>
+                <p className={styles.CardDesc}>{direction.description}</p>
+                <div className={styles.CardMeta}>
+                  {direction.technologies.length > 0
+                    ? `${direction.technologies.length} технологий · `
+                    : ""}
+                  {directionQuestionCount(direction)} вопросов
+                </div>
+              </a>
+            ))}
+          </div>
+        </>
       )}
     </div>
   );
