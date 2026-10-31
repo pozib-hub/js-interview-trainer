@@ -18,6 +18,7 @@ export default function QuestionsLayout({
         <Button size="sm" href="/tasks">🧩 Задачи</Button>
         <Button size="sm" href="/interview">🎯 Собеседование</Button>
         <Button size="sm" href="/questions/my">⭐ Мои вопросы</Button>
+        <Button size="sm" href="/questions/interview">🎤 Устный собес</Button>
         <Button
           size="sm"
           variant="primary"

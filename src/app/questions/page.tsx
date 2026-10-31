@@ -141,6 +141,16 @@ export default function QuestionsHomePage() {
 
       {index && !searching && (
         <>
+          <a href="/questions/interview" className={styles.InterviewBanner}>
+            <div>
+              <h3 className={styles.InterviewBannerTitle}>🎤 Пройти устное собеседование</h3>
+              <p className={styles.InterviewBannerDesc}>
+                ИИ подберёт вопросы на 30 минут — отвечайте голосом, в конце
+                получите разбор каждого ответа
+              </p>
+            </div>
+            <span className={styles.InterviewBannerArrow}>→</span>
+          </a>
           <div className={styles.Grid}>
             <a href="/questions/my" className={`${styles.Card} ${styles.CardAccent}`}>
               <h3 className={styles.CardTitle}>⭐ Мои вопросы</h3>
