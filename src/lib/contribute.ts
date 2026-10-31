@@ -39,3 +39,40 @@ export function newTaskIssueUrl(opts: {
 
   return `${repoUrl()}/issues/new?${params.toString()}`;
 }
+
+/**
+ * Build a "new question" issue URL pre-filled with the question-proposal
+ * template. Direction/technology are pre-filled when known (from the current
+ * section); the question text and answer are provided by the user.
+ */
+export function newQuestionIssueUrl(opts: {
+  direction?: string;
+  technology?: string;
+  question?: string;
+} = {}): string {
+  const params = new URLSearchParams();
+  params.set("template", "new-question.md");
+  params.set("labels", "question");
+
+  if (opts.question) params.set("title", `[QUESTION] ${opts.question}`);
+
+  const body: string[] = [];
+  body.push("## Направление");
+  body.push(opts.direction || "");
+  body.push("");
+  body.push("## Технология");
+  body.push(opts.technology || "");
+  body.push("");
+  body.push("## Глава (необязательно)");
+  body.push("");
+  body.push("## Вопрос");
+  body.push("");
+  body.push("");
+  body.push("## Ответ (необязательно)");
+  body.push("");
+  body.push("## Дополнительные заметки");
+  body.push("");
+  params.set("body", body.join("\n"));
+
+  return `${repoUrl()}/issues/new?${params.toString()}`;
+}

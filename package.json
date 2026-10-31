@@ -4,13 +4,14 @@
   "private": true,
   "scripts": {
     "dev": "node scripts/dev.mjs",
-    "prebuild": "node scripts/build-tasks.mjs",
+    "prebuild": "node scripts/build-tasks.mjs && node scripts/build-questions.mjs",
     "build": "next build",
     "build:static": "node scripts/build-static.mjs",
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "validate:tasks": "node scripts/validate-tasks.mjs"
+    "validate:tasks": "node scripts/validate-tasks.mjs",
+    "validate:questions": "node scripts/validate-questions.mjs"
   },
   "dependencies": {
     "@monaco-editor/react": "^4.6.0",

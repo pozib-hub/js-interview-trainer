@@ -41,6 +41,18 @@ if (tasksResult.status !== 0) {
   process.exit(tasksResult.status ?? 1);
 }
 
+// Step 1b: Build questions.json
+console.log("[build:static] Building questions.json...");
+const questionsResult = spawnSync("node", ["scripts/build-questions.mjs"], {
+  cwd: path.resolve(__dirname, ".."),
+  env,
+  stdio: "inherit",
+});
+if (questionsResult.status !== 0) {
+  console.error("[build:static] build-questions failed");
+  process.exit(questionsResult.status ?? 1);
+}
+
 // Step 2: Move API routes away (Next.js export doesn't support API routes)
 moveApiAway();
 

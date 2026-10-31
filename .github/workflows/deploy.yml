@@ -36,6 +36,9 @@ jobs:
       - name: Validate tasks
         run: node scripts/validate-tasks.mjs
 
+      - name: Validate questions
+        run: node scripts/validate-questions.mjs
+
       - name: Lint
         run: npm run lint
         continue-on-error: true

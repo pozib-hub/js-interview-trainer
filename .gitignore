@@ -12,4 +12,5 @@ tasks/**/.user-solution.ts
 data.json
 public/tasks.json
 public/tasks/
+public/questions.json
 tsconfig.tsbuildinfo
